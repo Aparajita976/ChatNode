@@ -1,62 +1,64 @@
-/*const app = require("express")();
-const httpServer = require("http").createServer(app);
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import { v1 as uuidv1 } from 'uuid';
+import userRouter from "./Router/user-router"
+import conversationRouter from './Router/conversation-router';
+import messageRouter from './Router/message-router';
+import multer from 'multer';
+import path from "path";
+import dotenv from 'dotenv';
 
-const { Server } = require("socket.io")
-const io = new Server(httpServer, {
-    cors: {
-        origin: "http://localhost:3000",
-        method: ["GET", "POST"]
+import { dirname } from 'path';
+
+
+const __dirname = path.resolve();
+const app = express();
+
+
+app.use(express.json());
+app.use(express.static(path.join(__dirname, './frontend/build')))
+app.use("/images", express.static("public"));
+//app.use("/images", express.static(path.join(__dirname, "public/images")));
+app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
+//app.use("/images", express.static(path.join(__dirname, "public/images")));
+
+app.use("/user", userRouter);
+app.use("/conversation", conversationRouter);
+app.use("/message", messageRouter);
+dotenv.config();
+mongoose.connect('mongodb+srv://aparajitabandyopadhyay5:AlpYKZb87kVK26n4@cluster0.mtabm9g.mongodb.net/?retryWrites=true&w=majority').then(() => console.log("DBconnection successfull")).catch((error) => { console.log("error") });
+
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, "./public/images");
+    },
+    filename: function (req, file, cb) {
+        const name = req.body.name;
+        cb(null, file.originalname);
     },
 });
 
-let users = [];
-
-const addUser = (userId, socketId) => {
-    !users.some((user) => user.userId === userId) &&
-        users.push({ userId, socketId });
-};
-
-const removeUser = (socketId) => {
-    users = users.filter((user) => user.socketId !== socketId);
-};
-
-const getUser = (userId) => {
-    return users.find((user) => user.userId === userId);
-};
-
-io.on("connection", (socket) => {
-    //when ceonnect
-    console.log("a user connected.");
-
-    //take userId and socketId from user
-    socket.on("addUser", (userId) => {
-        addUser(userId, socket.id);
-        io.emit("getUsers", users);
-
-    })
-    //send and get message
-    socket.on("sendMessage", ({ senderId, receiverId, text }) => {
-        const user = getUser(receiverId);
-        io.to(user.socketId).emit("getMessage", {
-            senderId,
-            text,
-        });
-    })
-
-    //when disconnect
-    socket.on("disconnect", () => {
-        console.log("a user disconnected!");
-        removeUser(socket.id);
-        io.emit("getUsers", users);
-    });
+const upload = multer({ storage: storage });
+app.post("/upload", upload.single("file"), (req, res) => {
+    res.status(200).json("File has been uploaded");
 });
-httpServer.listen(4000, () => {
-    "server is running on port 3000"
-})*/
-dotenv.config()
-const dotenv = require('dotenv');
-const PORT = process.env.PORT || 8800
-const io = require('socket.io')(PORT, {
+app.get("/images/:name", upload.single("file"), (req, res) => {
+    const name = req.params.name
+
+
+
+});
+const PORT = process.env.PORT || 5000
+const server = app.listen(PORT, () => {
+    console.log("server is running")
+})
+
+
+//AlpYKZb87kVK26n4
+import { Server } from "socket.io";
+const io = new Server(server, {
     cors: {
         origin: "*",
         method: ["GET", "POST"]
