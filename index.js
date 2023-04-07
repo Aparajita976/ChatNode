@@ -53,6 +53,7 @@ io.on("connection", (socket) => {
 httpServer.listen(4000, () => {
     "server is running on port 3000"
 })*/
+dotenv.config()
 const dotenv = require('dotenv');
 const PORT = process.env.PORT || 8800
 const io = require('socket.io')(PORT, {
